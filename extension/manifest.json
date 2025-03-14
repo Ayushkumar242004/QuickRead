@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "QuickRead",
+  "version": "1.5.11",
+  "description": "Summarize web page using Gemini",
+  "default_locale": "en",
+  "icons": {
+    "128": "img/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "options_page": "options.html",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage",
+    "webNavigation",
+    "downloads"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+G"
+      }
+    }
+  },
+  "web_accessible_resources": [
+    {
+        "resources": ["lib/","lib/pdf.mjs", "lib/pdf.worker.mjs"],
+        "matches": ["<all_urls>"]
+    }
+]
+}

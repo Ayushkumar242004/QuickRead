@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="results_title">Ask more with Gemini</title>
+  <link rel="stylesheet" href="css/new.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;   
+      background-color: #0b0d10;
+      color: #e0e0e0; 
+      align-items: center;     
+    }
+
+    header {
+      background: linear-gradient(180deg, #232b37, #0b0d10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60px;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 span{
+        font-family: "Dancing Script", serif;
+        display: flex;
+        font-size: 1.2em;
+        align-items: center;
+        color: #ffffff;
+        text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.321);
+    }
+
+    img {
+      margin-right: 0.5rem;    
+    }
+
+    #content {
+        flex-grow: 1; 
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: #202124; 
+        border: none; 
+        box-shadow: none; 
+        border-radius: 0; 
+        backdrop-filter: none; 
+        -webkit-backdrop-filter: none;
+        color: #d3d4da; 
+        font-size: 1rem;
+        line-height: 1.5;
+        letter-spacing: normal;
+    }
+
+    #content p { 
+        margin-bottom: 0.5rem; 
+        white-space: pre-wrap; 
+    }
+
+    #conversation {
+        padding: 1rem;
+    }
+
+    #text {
+        width: calc(100% - 80px); 
+        padding: 0.5rem;
+        border: 1px solid #404040; 
+        border-radius: 5px;
+        background-color: #282c34; 
+        color: #e0e0e0;
+        resize: none; 
+        margin-right: 5px;
+        vertical-align: middle;
+        height: 50px; 
+        
+    }
+
+    #text:focus {
+        outline: none;
+        border-color: #61afef; 
+    }
+
+    button {   
+        color: white;
+        padding: auto;
+        border: 1px solid #a6a6a646;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: transparent;
+        font-size: smaller;
+        margin-right: .4em;
+    }
+
+    button:hover {
+        background: transparent;
+        box-shadow: 0 2px 5px rgba(255, 255, 255, 0.25);
+    }
+    
+    button:active {
+        background-color: #447ab3;
+    }
+
+    #text {
+        display: flex;
+        padding: 1rem;
+        background-color: #282c34;
+        border-top: 1px solid #3c3c3c; 
+        scrollbar-width: none; 
+    }
+
+    body.narrow select,
+    body.narrow #clear {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <header style="padding-top: 1rem; padding-bottom: 0rem;">
+    <h1 id="header" style="display: flex; align-items: center; font-size: 1.2rem;">
+      <img src="img/icon-128.png" alt="" width="64" height="64" style="margin-right: .5rem;">
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" data-i18n="results_title">
+        Ask more with Gemini
+      </span>
+    </h1>
+  </header>
+  
+  <p id="content" dir="auto"></p>
+  <!-- <p id="summary" dir="auto" style="display: none;"></p> -->
+
+  <div id="conversation"></div>
+
+  <div>
+    <div style="display: flex;">
+        <textarea id="text" rows="4" placeholder="Ask a follow-up question" style="width: 100%;"></textarea>
+        <button id="send" data-i18n="results_button_send"></button>
+    </div>
+    <br>
+    <div style="display: flex;">  
+        <button id="copy" data-i18n="results_button_copy">Copy</button>
+        <span id="copy-status" style="color: gray;"></span>
+        <button id="clear" data-i18n="results_button_clear">Clear conversation</button>
+        <span id="languageModelContainer"></span>
+    </div>
+    <span id="send-status" style="color: gray;"></span>
+  </div>
+
+  <script src="lib/marked.umd.min.js"></script>
+  <script src="lib/purify.min.js"></script>
+  <script type="module" src="results.js"></script>
+</body>
+
+</html>

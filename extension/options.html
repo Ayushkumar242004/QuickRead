@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="options_title">QuickRead: Options</title>
+  <link rel="stylesheet" href="css/new.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
+  <style>
+    body{
+      background-color: #0b0d10;
+    }
+
+    header{
+      background: linear-gradient(180deg, #232b37, #0b0d10);  
+    }
+  </style>
+</head>
+
+<body>
+  <header style="padding-top: 1rem; padding-bottom: 0rem;">
+    <h1 id="header" style="display: flex; align-items: center; font-size: 1.2rem;">
+      <img src="img/icon-128.png" alt="" width="48" height="48" style="margin-right: .5rem;">
+      <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 100;" >
+        <span style="font-family: Dancing Script,  sans-serif; font-weight: 700; font-size: 1.7em; text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.271);">QuickRead</span>
+      </span>
+    </h1>
+  </header>
+
+  <p>
+    <label for="apiKey" data-i18n="options_apikey">Gemini API Key</label>
+    <br>
+    <input type="password" id="apiKey" size="39">
+    <br>
+    <small>
+      <span data-i18n="options_apikey_hint">You can obtain a Gemini API Key at the following page.</span>
+      <a href="https://ai.google.dev" target="_blank">Google AI for Developers</a>
+    </small>
+  </p>
+
+  <p>
+    <label for="languageModel" data-i18n="options_model">Language Model</label>
+    <br>
+    <span id="languageModelContainer"></span>
+    <br>
+    <label for="userModelId" data-i18n="options_Model_user">User-specified Model</label>
+    <br>
+    <input id="userModelId" size="39">
+  </p>
+
+  <p>
+    <span data-i18n="options_no_text_action">When no text is selected, do the following action</span>
+    <br>
+    <input id="noTextSummarize" type="radio" name="noTextAction" value="summarize" checked>
+    <label for="noTextSummarize" data-i18n="options_no_text_summarize">Summarize</label>
+  </p>
+
+  <p>
+    <span data-i18n="options_text_action">When text is selected, do the following action</span>
+    <br>
+    <input id="textSummarize" type="radio" name="textAction" value="summarize" checked>
+    <label for="textSummarize" data-i18n="options_text_summarize">Summarize</label>
+  </p>
+
+  <p>
+    <span data-i18n="options_theme">Theme</span>
+    <br>
+    <select id="theme">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+  </p>
+
+  <p>
+    <button id="save" data-i18n="options_button_save">Save options</button>
+    <span id="status" style="color: gray;"></span>
+  </p>
+
+  <script type="module" src="options.js"></script>
+</body>
+
+</html>

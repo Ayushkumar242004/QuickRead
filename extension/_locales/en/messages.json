@@ -1,0 +1,134 @@
+{
+    "extension_name": {
+        "message": "Summarize with Gemini"
+    },
+    "extension_description": {
+        "message": "Summarize web pages. Uses Gemini as the backend."
+    },
+    "popup_button_copy": {
+        "message": "Copy"
+    },
+    "popup_copied": {
+        "message": "Copied."
+    },
+    "popup_button_run": {
+        "message": "Summarize"
+    },
+    "popup_button_results": {
+        "message": "Open results in a new tab"
+    },
+    "popup_button_options": {
+        "message": "Open options page"
+    },
+    "popup_summarizing": {
+        "message": "Summarizing"
+    },
+    "popup_summarizing_captions": {
+        "message": "Summarizing the captions"
+    },
+    "popup_summarizing_image": {
+        "message": "Summarizing the image"
+    },
+    "popup_processing": {
+        "message": "Processing"
+    },
+    "popup_prompt_blocked": {
+        "message": "The prompt was blocked."
+    },
+    "popup_response_blocked": {
+        "message": "The response was blocked."
+    },
+    "popup_unexpected_response": {
+        "message": "An unknown error occurred. Please check the console log."
+    },
+    "popup_miscellaneous_error": {
+        "message": "This page cannot be summarized or translated."
+    },
+    "results_title": {
+        "message": "Ask more with Gemini"
+    },
+    "results_button_clear": {
+        "message": "Clear conversation"
+    },
+    "results_button_copy": {
+        "message": "Copy"
+    },
+    "results_copied": {
+        "message": "Copied."
+    },
+    "results_button_send": {
+        "message": "Send"
+    },
+    "results_waiting_response": {
+        "message": "Waiting for a response"
+    },
+    "results_prompt_blocked": {
+        "message": "The prompt was blocked."
+    },
+    "results_response_blocked": {
+        "message": "The response was blocked."
+    },
+    "results_unexpected_response": {
+        "message": "An unknown error occurred. Please check the console log."
+    },
+    "options_title": {
+        "message": "Options - Summarize and Translate with Gemini"
+    },
+    "options_apikey": {
+        "message": "Gemini API Key"
+    },
+    "options_apikey_hint": {
+        "message": "You can obtain a Gemini API Key at the following page."
+    },
+    "options_model": {
+        "message": "Language Model"
+    },
+    "options_model_user": {
+        "message": "User-specified Model"
+    },
+    "options_language": {
+        "message": "Summarize in"
+    },
+    "options_language_user": {
+        "message": "User-specified Language"
+    },
+    "options_language_notes": {
+        "message": "The language setting is disregarded in custom actions."
+    },
+    "options_no_text_action": {
+        "message": "When no text is selected, do the following action"
+    },
+    "options_no_text_summarize": {
+        "message": "Summarize (default)"
+    },
+    "options_no_text_translate": {
+        "message": "Translate"
+    },
+    "options_no_text_custom": {
+        "message": "Custom action"
+    },
+    "options_text_action": {
+        "message": "When text is selected, do the following action"
+    },
+    "options_text_summarize": {
+        "message": "Summarize"
+    },
+    "options_text_translate": {
+        "message": "Translate (default)"
+    },
+    "options_text_custom": {
+        "message": "Custom action"
+    },
+    "options_streaming": {
+        "message": "Streaming output from the language model"
+    },
+    "options_theme": {
+        "message": "Theme"
+    },
+    "options_button_save": {
+        "message": "Save options"
+    },
+    "options_saved": {
+        "message": "Saved."
+    }
+}
