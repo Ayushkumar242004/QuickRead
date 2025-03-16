@@ -156,15 +156,15 @@ const extractTaskInformation = async (languageCode) => {
     if (tab.url.endsWith(".pdf")) {
       console.log("2");
 
-      if (tab.url && tab.url.toLowerCase().includes(".pdf")) {
-        // Notify popup.html to switch content
-        document.getElementById("content").style.display = "none";
-        document.getElementById("summary").style.display = "block";
+      // if (tab.url && tab.url.toLowerCase().includes(".pdf")) {
+      //   // Notify popup.html to switch content
+      //   document.getElementById("content").style.display = "none";
+      //   document.getElementById("summary").style.display = "block";
 
-      } else {
-        document.getElementById("content").style.display = "block";
-        document.getElementById("summary").style.display = "none";
-      }
+      // } else {
+      //   document.getElementById("content").style.display = "block";
+      //   document.getElementById("summary").style.display = "none";
+      // }
 
       mediaType = "text";
       try {
@@ -183,6 +183,8 @@ const extractTaskInformation = async (languageCode) => {
         taskInput = removeHtmlTags(taskInput);
 
         updateSummaryElement(taskInput);
+
+        document.getElementById("content").textContent = taskInput;
 
       } catch (error) {
         console.error("Error extracting text from PDF:", error);
@@ -227,7 +229,7 @@ const extractTaskInformation = async (languageCode) => {
       }
     }
 
-    if (!taskInput) {
+    if (!taskInput && tab.url.endsWith(".pdf")==false) {
       // If no text is found, capture the visible tab as an image
       mediaType = "image";
       try {
