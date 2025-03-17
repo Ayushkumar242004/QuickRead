@@ -105,7 +105,7 @@ const getCaptions = async (videoUrl, languageCode) => {
 
 const extractPDFText = async (pdfUrl) => {
   try {
-    console.log("3");
+  
     const response = await fetch(pdfUrl);
     const arrayBuffer = await response.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
@@ -131,7 +131,7 @@ const extractTaskInformation = async (languageCode) => {
   let actionType = "";
   let mediaType = "";
   let taskInput = "";
-  console.log("1");
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   try {
@@ -154,7 +154,7 @@ const extractTaskInformation = async (languageCode) => {
       .noTextAction;
 
     if (tab.url.endsWith(".pdf")) {
-      console.log("2");
+     
 
       // if (tab.url && tab.url.toLowerCase().includes(".pdf")) {
       //   // Notify popup.html to switch content
@@ -171,20 +171,24 @@ const extractTaskInformation = async (languageCode) => {
         taskInput = await extractPDFText(tab.url);
         // console.log("Extracted Text:", taskInput);
 
-        const modelId = getModelId("1.5-pro");
+        const modelId = getModelId("2.0-flash");
         const apiKey = "AIzaSyA4yim2okmVuLZqFfK9ryUa1HQRtRL2JUs";
 
-        taskInput = await getSummaryFromGemini(taskInput, apiKey, modelId);
+        // taskInput = await getSummaryFromGemini(taskInput, apiKey, modelId);
         // console.log("Summary from Gemini:", taskInput);
 
-        taskInput = marked.parse(taskInput);
-        console.log("Markdown Bullet Points:\n", taskInput);
+        // taskInput = marked.parse(taskInput);
+        // console.log("Markdown Bullet Points:\n", taskInput);
 
-        taskInput = removeHtmlTags(taskInput);
+        // taskInput = removeHtmlTags(taskInput);
+        // console.log(taskInput);
 
-        updateSummaryElement(taskInput);
+
+        taskInput = removeHtmlTags(marked.parse(await getSummaryFromGemini(taskInput, apiKey, modelId)));
+        
 
         document.getElementById("content").textContent = taskInput;
+       
 
       } catch (error) {
         console.error("Error extracting text from PDF:", error);
@@ -245,12 +249,7 @@ const extractTaskInformation = async (languageCode) => {
   return { actionType, mediaType, taskInput };
 };
 
-function updateSummaryElement(taskInput) {
-  const summaryElement = document.getElementById("summary");
-  if (summaryElement) {
-    summaryElement.textContent = taskInput; // Update the content of the summary element
-  }
-}
+
 
 async function getSummaryFromGemini(text, apiKey, modelId) {
   try {
@@ -272,29 +271,7 @@ function removeHtmlTags(html) {
   return html.replace(/<[^>]*>/g, ''); // Remove all HTML tags
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const summaryContainer = document.getElementById("summary");
 
-  try {
-    const { actionType, mediaType, taskInput } = await extractTaskInformation(
-      "en"
-    );
-
-    // Send extracted data to service worker
-    chrome.runtime.sendMessage(
-      { action: "saveSummary", summary: taskInput },
-      (response) => {
-        console.log("Summary sent to service worker:", response);
-      }
-    );
-
-    // Display summary in the popup
-    summaryContainer.innerText = taskInput || "No summary available.";
-  } catch (error) {
-    console.error("Error extracting summary:", error);
-    summaryContainer.innerText = "Error fetching summary.";
-  }
-});
 
 const getLoadingMessage = (actionType, mediaType) => {
   let loadingMessage = "";
@@ -367,8 +344,10 @@ const main = async (useCache) => {
     // Split the task input
     if (mediaType === "image") {
       // If the task input is an image, do not split it
+      
       taskInputChunks = [taskInput];
     } else {
+      
       taskInputChunks = await chrome.runtime.sendMessage({
         message: "chunk",
         actionType: actionType,
@@ -376,7 +355,7 @@ const main = async (useCache) => {
         languageModel: languageModel,
       });
 
-      console.log(taskInputChunks);
+     
     }
 
     for (const taskInputChunk of taskInputChunks) {
@@ -417,7 +396,7 @@ const main = async (useCache) => {
               "streamContent"
             );
 
-            if (streamContent) {
+            if (streamContent ) {
               const div = document.createElement("div");
               div.textContent = `${content}\n\n${streamContent}\n\n`;
               document.getElementById("content").innerHTML = DOMPurify.sanitize(
@@ -435,7 +414,8 @@ const main = async (useCache) => {
         }
       }
 
-      console.log(response);
+      
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
       if (response.ok) {
         if (response.body.promptFeedback?.blockReason) {
@@ -450,14 +430,16 @@ const main = async (useCache) => {
             `${chrome.i18n.getMessage("popup_response_blocked")} ` +
             `Reason: ${response.body.candidates[0].finishReason}`;
           break;
-        } else if (response.body.candidates?.[0].content) {
+        } else if (response.body.candidates?.[0].content ) {
           // A normal response was returned
           content += `${response.body.candidates[0].content.parts[0].text}\n\n`;
           const div = document.createElement("div");
           div.textContent = content;
+         
           document.getElementById("content").innerHTML = DOMPurify.sanitize(
             marked.parse(div.innerHTML)
           );
+        
 
           // Scroll to the bottom of the page
           if (!streaming) {

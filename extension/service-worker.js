@@ -5,23 +5,35 @@ const getSystemPrompt = async (actionType, mediaType, languageCode, taskInputLen
     en: "English",
   };
 
-  // Set the user-specified language
-  // languageNames["zz"] = (await chrome.storage.local.get({ userLanguage: "Turkish" })).userLanguage;
-
+ 
   const numItems = Math.min(10, 3 + Math.floor(taskInputLength / 2000));
   let systemPrompt = "";
 
   if (actionType === "summarize") {
     if (mediaType === "image") {
-      systemPrompt = "Summarize the image as Markdown numbered list " +
-        `in ${languageNames[languageCode]} and reply only with the list.\n` +
-        "Format:\n1. First point.\n2. Second point.\n3. Third point.";
-    } else {
-      systemPrompt = `Summarize the entire text as up to ${numItems}-item Markdown numbered list ` +
-        `in ${languageNames[languageCode]} and reply only with the list.\n` +
-        "Format:\n1. First point.\n2. Second point.\n3. Third point.";
-    }
-  } 
+      console.log("image");
+      systemPrompt = "Analyze the image and summarize its key details as a structured Markdown numbered list. Ensure each point is clear, concise, and action-oriented. Respond only with the list in " + 
+        `${languageNames[languageCode]}.\n` +
+        "Format:\n\n" +
+        "**Key Observations:**\n\n" +
+        "1. **[Main Element]:** [Brief Description]\n" +
+        "2. **[Another Key Detail]:** [Brief Explanation]\n" +
+        "3. **[Contextual Insight]:** [Additional Information]\n\n" +
+        "Ensure the response provides insights based on visible elements in the image.";
+    } 
+    // else {
+    //   console.log("pdf");
+    //   systemPrompt = `Summarize the entire text as a well-structured Markdown numbered list with key takeaways. The response should be clear, concise, and action-oriented in ` +
+    //     `${languageNames[languageCode]}.\n` +
+    //     "Format:\n\n" +
+    //     "**Summary:**\n\n" +
+    //     "1. **[Key Topic]:** [Short Explanation]\n" +
+    //     "2. **[Main Insight]:** [Brief Description]\n" +
+    //     "3. **[Supporting Detail]:** [Additional Information]\n\n" +
+    //     `Ensure the summary is limited to ${numItems} key points for clarity and readability.`;
+    // }
+  }
+  
 
   return systemPrompt;
 };
@@ -234,17 +246,41 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       const apiContents = [
         {
           role: 'user',
-          parts: [{ text: `Summarize the following text in markdown bullet points:\n\n${text}` }],
+          parts: [
+            {
+              text: `Summarize the following text in markdown with detailed, action-oriented bullet points. Ensure the response follows this exact structured format:
+      
+      Okay, here's a breakdown of the text into more granular, action-oriented bullet points, focusing on understanding and application:
+      
+      **I. [Main Topic]**
+      
+      *   **[Key Concept]:** [Short Explanation]
+      *   **[Another Key Concept]:** [Short Explanation]
+      
+      **II. [Next Section]**
+      
+      *   **[Concept]:** [Explanation]
+      *   **[Subtopic]:** [Explanation]
+      
+      Continue structuring the response using numbered sections (I, II, III, etc.) and ensure each section contains clearly labeled bullet points that define, explain, and provide actionable insights.
+      
+      Here is the text to summarize:\n\n${text}`
+            },
+          ],
         },
       ];
-
+      
       // Call the Gemini API using the generateContent function
       const result = await generateContent(apiKey, modelId, apiContents);
-
+      
       if (result.ok) {
         // Extract the summary from the API response
+        
         const summary = result.body.candidates[0].content.parts[0].text;
+       
         sendResponse({ summary });
+        
+
       } else {
         // Handle API errors
         console.error("Gemini API Error:", result.body.error.message);

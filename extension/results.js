@@ -217,29 +217,3 @@ document.getElementById("clear").addEventListener("click", clearConversation);
 document.getElementById("copy").addEventListener("click", copyContent);
 document.getElementById("send").addEventListener("click", askQuestion);
 
-document.addEventListener("DOMContentLoaded", function () {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      if (tabs.length === 0) return;
-
-      let tab = tabs[0];
-
-      if (tab.url && tab.url.toLowerCase().includes(".pdf")) {
-          document.getElementById("content").style.display = "none";
-          document.getElementById("summary").style.display = "block";
-
-          let summaryElement = document.getElementById("summary");
-
-          // Use textContent instead of innerHTML
-          let markdownText = summaryElement.textContent.trim(); 
-
-          if (markdownText) {
-              summaryElement.innerHTML = marked.parse(markdownText);
-          } else {
-              summaryElement.innerHTML = "⚠️ No summary available.";
-          }
-      } else {
-          document.getElementById("content").style.display = "block";
-          document.getElementById("summary").style.display = "none";
-      }
-  });
-});
