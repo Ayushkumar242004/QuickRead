@@ -34,17 +34,27 @@ const getSelectedText = () => {
   return window.getSelection().toString();
 };
 
+// Function to extract and summarize text content
 const getWholeText = () => {
-  // Return the whole text
-  const documentClone = document.cloneNode(true);
-  const article = new Readability(documentClone).parse();
+  try {
+    const documentClone = document.cloneNode(true);
 
-  if (article) {
-    return article.textContent;
-  } else {
-    console.log(
-      "Failed to parse the article. Using document.body.innerText instead."
-    );
+    // Remove unnecessary elements (ads, sidebars)
+    const unwantedSelectors = ["aside", ".sidebar", ".ads", ".advertisement", "[role='complementary']"];
+    unwantedSelectors.forEach(selector => {
+      documentClone.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Parse document using Readability
+    if (typeof Readability !== "undefined") {
+      const article = new Readability(documentClone).parse();
+      return article ? article.textContent : document.body.innerText;
+    } else {
+      console.warn("Readability is not available. Returning raw text.");
+      return document.body.innerText;
+    }
+  } catch (error) {
+    console.error("Error in summarizing text:", error);
     return document.body.innerText;
   }
 };
@@ -104,6 +114,7 @@ const getCaptions = async (videoUrl, languageCode) => {
 };
 
 const extractPDFText = async (pdfUrl) => {
+  
   try {
   
     const response = await fetch(pdfUrl);
@@ -131,7 +142,7 @@ const extractTaskInformation = async (languageCode) => {
   let actionType = "";
   let mediaType = "";
   let taskInput = "";
-
+  
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
   try {
@@ -140,9 +151,9 @@ const extractTaskInformation = async (languageCode) => {
         target: { tabId: tab.id },
         func: getSelectedText,
       })
-    )[0].result;
+    )[0]?.result || "";
   } catch (error) {
-    console.error(error);
+    console.error("Error extracting selected text:", error);
   }
 
   if (taskInput) {
@@ -153,52 +164,34 @@ const extractTaskInformation = async (languageCode) => {
     actionType = (await chrome.storage.local.get({ noTextAction: "translate" }))
       .noTextAction;
 
-    if (tab.url.endsWith(".pdf")) {
-     
-
-      // if (tab.url && tab.url.toLowerCase().includes(".pdf")) {
-      //   // Notify popup.html to switch content
-      //   document.getElementById("content").style.display = "none";
-      //   document.getElementById("summary").style.display = "block";
-
-      // } else {
-      //   document.getElementById("content").style.display = "block";
-      //   document.getElementById("summary").style.display = "none";
-      // }
-
-      mediaType = "text";
-      try {
-        taskInput = await extractPDFText(tab.url);
-        // console.log("Extracted Text:", taskInput);
-
-        const modelId = getModelId("2.0-flash");
-        const apiKey = "AIzaSyA4yim2okmVuLZqFfK9ryUa1HQRtRL2JUs";
-
-        // taskInput = await getSummaryFromGemini(taskInput, apiKey, modelId);
-        // console.log("Summary from Gemini:", taskInput);
-
-        // taskInput = marked.parse(taskInput);
-        // console.log("Markdown Bullet Points:\n", taskInput);
-
-        // taskInput = removeHtmlTags(taskInput);
-        // console.log(taskInput);
-
-
-        taskInput = removeHtmlTags(marked.parse(await getSummaryFromGemini(taskInput, apiKey, modelId)));
-        
-
-        document.getElementById("content").textContent = taskInput;
-       
-
-      } catch (error) {
-        console.error("Error extracting text from PDF:", error);
-        taskInput = "";
-      }
+      if (tab.url.endsWith(".pdf")) {
+        mediaType = "text";
+        try {
+          taskInput = await extractPDFText(tab.url);
+      
+          // Retrieve API key from chrome.storage.local
+          const options = await chrome.storage.local.get("apiKey");
+          const apiKey = options.apiKey || ""; // Use stored key or default to empty
+          const modelId = getModelId("2.0-flash");
+      
+          if (!apiKey) {
+            console.error("API key is missing.");
+            document.getElementById("content").textContent = "Error: API key is missing.";
+            return;
+          }
+      
+          taskInput = removeHtmlTags(marked.parse(await getSummaryFromGemini(taskInput, apiKey, modelId)));
+      
+          // document.getElementById("content").textContent = taskInput;
+          
+        } catch (error) {
+          console.error("Error extracting text from PDF:", error);
+          taskInput = "";
+        }
     } else if (
       tab.url.includes("https://www.youtube.com/watch?v=") ||
       tab.url.includes("https://m.youtube.com/watch?v=")
     ) {
-      // If it's a YouTube video, try to extract captions
       mediaType = "captions";
       try {
         taskInput = (
@@ -207,41 +200,119 @@ const extractTaskInformation = async (languageCode) => {
             func: getCaptions,
             args: [tab.url, languageCode],
           })
-        )[0].result;
+        )[0]?.result || "";
       } catch (error) {
-        console.error(error);
+        console.error("Error extracting captions:", error);
       }
-    }
-
-    if (!taskInput) {
-      // If no captions or text found, try getting the main text of the page
-      console.log("4");
+    } else {
       mediaType = "text";
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ["lib/Readability.min.js"],
         });
+
         taskInput = (
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: getWholeText,
           })
-        )[0].result;
+        )[0]?.result || "";
       } catch (error) {
-        console.error(error);
+        console.error("Error extracting whole text:", error);
       }
-    }
 
-    if (!taskInput && tab.url.endsWith(".pdf")==false) {
-      // If no text is found, capture the visible tab as an image
-      mediaType = "image";
-      try {
-        taskInput = await chrome.tabs.captureVisibleTab(tab.windowId, {
-          format: "jpeg",
-        });
-      } catch (error) {
-        console.error("Error capturing tab image:", error);
+      if (!tab.url.endsWith(".pdf") && !tab.url.startsWith("chrome://")) {
+        mediaType = "ad";
+        try {
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              const isRelevantImage = (imageUrl) => {
+                return !(
+                  imageUrl.includes("icon") ||
+                  imageUrl.includes("logo") ||
+                  imageUrl.includes("placeholder") ||
+                  imageUrl.includes("ads")
+                );
+              };
+
+              let imageURLs = new Set();
+              document.querySelectorAll("img").forEach((img) => {
+                let imageUrl = img.src;
+                if (
+                  imageUrl &&
+                  !imageUrl.startsWith("data:image") &&
+                  isRelevantImage(imageUrl)
+                ) {
+                  imageURLs.add(imageUrl);
+                }
+              });
+
+              return [...imageURLs].slice(0, 2);
+            },
+          });
+
+          const imageUrls = results?.[0]?.result || [];
+          if (imageUrls.length > 0) {
+            try {
+              const options = await chrome.storage.local.get("apiKey");
+              const apiKey = options.apiKey || ""; 
+              const modelId = "gemini-1.5-flash"; 
+          
+              if (!apiKey) {
+                console.error("API key is missing. Please set it in the options.");
+                return;
+              }
+
+              const imageDescriptions = await Promise.all(
+                imageUrls.map(async (url) => {
+                  try {
+                    const base64Data = await convertImageToBase64(url);
+                    if (!base64Data) {
+                      return `Image: ${url}\nDescription: Error converting image to Base64.`;
+                    }
+
+                    const [mimeTypePart, base64String] = base64Data.split(";base64,");
+                    const mimeType = mimeTypePart.replace("data:", "");
+
+                    const validMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+                    if (!validMimeTypes.includes(mimeType)) {
+                      return `Image: ${url}\nDescription: Unsupported MIME type: ${mimeType}`;
+                    }
+
+                    const description = await analyzeImageWithGemini(
+                      base64String,
+                      mimeType,
+                      apiKey,
+                      modelId
+                    );
+                    
+                    return `Image Description: ${description}`;
+                  } catch (error) {
+                    console.error("Error analyzing image:", error);
+                    return `Image: ${url}\nDescription: Error analyzing image`;
+                  }
+                })
+              );
+
+              const imageSummary = imageDescriptions.join("\n\n");
+             
+              taskInput += `\n\n**Image Summary:**\n${imageSummary}`;
+              
+              // document.getElementById("content").textContent = taskInput;
+             
+              
+            } catch (error) {
+              console.error("Error processing images:", error);
+              taskInput = "Error processing images.";
+            }
+          } else {
+            taskInput = "No relevant images found.";
+          }
+        } catch (error) {
+          console.error("Error extracting images from webpage:", error);
+        }
       }
     }
   }
@@ -249,7 +320,70 @@ const extractTaskInformation = async (languageCode) => {
   return { actionType, mediaType, taskInput };
 };
 
+async function analyzeImageWithGemini(base64String, mimeType, apiKey, modelId) {
+  try {
+    if (!base64String || !mimeType || !apiKey || !modelId) {
+      throw new Error("Missing required parameters for Gemini API call.");
+    }
 
+    const apiContents = [
+      {
+        role: "user",
+        parts: [
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64String,
+            },
+          },
+        ],
+      },
+    ];
+
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        {
+          action: "analyzeImage",
+          apiContents,
+          apiKey,
+          modelId,
+        },
+        (res) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(res);
+          }
+        }
+      );
+    });
+
+    if (!response || response.error) {
+      throw new Error(response?.error || "Invalid response from Gemini API.");
+    }
+    
+    return response.summary;
+  } catch (error) {
+    console.error("Error analyzing image with Gemini:", error);
+    return "Error analyzing image";
+  }
+}
+
+async function convertImageToBase64(url) {
+  try {
+    const response = await fetch(`http://localhost:3002/convert-image?url=${encodeURIComponent(url)}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+    }
+
+    const { base64 } = await response.json();
+    return base64;
+  } catch (error) {
+    console.error("Error converting image to Base64:", error);
+    return null;
+  }
+}
 
 async function getSummaryFromGemini(text, apiKey, modelId) {
   try {
@@ -277,21 +411,13 @@ const getLoadingMessage = (actionType, mediaType) => {
   let loadingMessage = "";
 
   if (actionType === "summarize") {
-    if (mediaType === "captions") {
-      loadingMessage = chrome.i18n.getMessage("popup_summarizing_captions");
-    } else if (mediaType === "image") {
-      loadingMessage = chrome.i18n.getMessage("popup_summarizing_image");
-    } else {
+    
       loadingMessage = chrome.i18n.getMessage("popup_summarizing");
-    }
+   
   } else if (actionType === "translate") {
-    if (mediaType === "captions") {
-      loadingMessage = chrome.i18n.getMessage("popup_translating_captions");
-    } else if (mediaType === "image") {
-      loadingMessage = chrome.i18n.getMessage("popup_translating_image");
-    } else {
+   
       loadingMessage = chrome.i18n.getMessage("popup_translating");
-    }
+  
   } else {
     loadingMessage = chrome.i18n.getMessage("popup_processing");
   }
@@ -327,12 +453,19 @@ const main = async (useCache) => {
     document.getElementById("languageModel").disabled = true;
     document.getElementById("copy").disabled = true;
     document.getElementById("results").disabled = true;
-
+    
+    displayIntervalId = setInterval(
+      displayLoadingMessage,
+      300,
+      "content",
+      chrome.i18n.getMessage("popup_processing") // Ensure this key exists
+    );
     // Extract the task information
     const { actionType, mediaType, taskInput } = await extractTaskInformation(
       languageCode
+      
     );
-
+    clearInterval(displayIntervalId);
     // Display a loading message
     displayIntervalId = setInterval(
       displayLoadingMessage,
@@ -343,19 +476,16 @@ const main = async (useCache) => {
 
     // Split the task input
     if (mediaType === "image") {
-      // If the task input is an image, do not split it
-      
       taskInputChunks = [taskInput];
-    } else {
-      
+    } else if (typeof taskInput === "string") {
       taskInputChunks = await chrome.runtime.sendMessage({
         message: "chunk",
         actionType: actionType,
         taskInput: taskInput,
         languageModel: languageModel,
       });
-
-     
+    } else {
+      taskInputChunks = [taskInput];
     }
 
     for (const taskInputChunk of taskInputChunks) {
@@ -396,7 +526,7 @@ const main = async (useCache) => {
               "streamContent"
             );
 
-            if (streamContent ) {
+            if (streamContent) {
               const div = document.createElement("div");
               div.textContent = `${content}\n\n${streamContent}\n\n`;
               document.getElementById("content").innerHTML = DOMPurify.sanitize(
@@ -414,7 +544,6 @@ const main = async (useCache) => {
         }
       }
 
-      
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
       if (response.ok) {
@@ -430,16 +559,15 @@ const main = async (useCache) => {
             `${chrome.i18n.getMessage("popup_response_blocked")} ` +
             `Reason: ${response.body.candidates[0].finishReason}`;
           break;
-        } else if (response.body.candidates?.[0].content ) {
+        } else if (response.body.candidates?.[0].content) {
           // A normal response was returned
           content += `${response.body.candidates[0].content.parts[0].text}\n\n`;
           const div = document.createElement("div");
           div.textContent = content;
-         
+
           document.getElementById("content").innerHTML = DOMPurify.sanitize(
             marked.parse(div.innerHTML)
           );
-        
 
           // Scroll to the bottom of the page
           if (!streaming) {

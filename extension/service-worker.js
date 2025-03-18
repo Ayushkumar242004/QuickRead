@@ -11,7 +11,7 @@ const getSystemPrompt = async (actionType, mediaType, languageCode, taskInputLen
 
   if (actionType === "summarize") {
     if (mediaType === "image") {
-      console.log("image");
+     
       systemPrompt = "Analyze the image and summarize its key details as a structured Markdown numbered list. Ensure each point is clear, concise, and action-oriented. Respond only with the list in " + 
         `${languageNames[languageCode]}.\n` +
         "Format:\n\n" +
@@ -19,8 +19,11 @@ const getSystemPrompt = async (actionType, mediaType, languageCode, taskInputLen
         "1. **[Main Element]:** [Brief Description]\n" +
         "2. **[Another Key Detail]:** [Brief Explanation]\n" +
         "3. **[Contextual Insight]:** [Additional Information]\n\n" +
+        "4. **[Image Description]:** [Image Information]\n\n" +
         "Ensure the response provides insights based on visible elements in the image.";
-    } 
+        
+      } 
+   
     // else {
     //   console.log("pdf");
     //   systemPrompt = `Summarize the entire text as a well-structured Markdown numbered list with key takeaways. The response should be clear, concise, and action-oriented in ` +
@@ -163,7 +166,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       const { apiKey, userModelId } = await chrome.storage.local.get({ apiKey: "", userModelId: "gemini-2.0-flash-001" });
       const modelId = getModelId(languageModel, userModelId);
       const chunkSize = await getCharacterLimit(apiKey, modelId, actionType);
-      console.log(`Chunk size: ${chunkSize}`);
+      // console.log(`Chunk size: ${chunkSize}`);
       const taskInputChunks = chunkText(taskInput, chunkSize);
       sendResponse(taskInputChunks);
     } else if (request.message === "generate") {
@@ -270,6 +273,38 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         },
       ];
       
+      // Call the Gemini API using the generateContent function
+      const result = await generateContent(apiKey, modelId, apiContents);
+      
+      if (result.ok) {
+        // Extract the summary from the API response
+        
+        const summary = result.body.candidates[0].content.parts[0].text;
+       
+        sendResponse({ summary });
+        
+
+      } else {
+        // Handle API errors
+        console.error("Gemini API Error:", result.body.error.message);
+        sendResponse({ error: result.body.error.message });
+      }
+    } catch (error) {
+      console.error("Error in service worker:", error);
+      sendResponse({ error: error.message });
+    }
+    // Return true to indicate that the response will be sent asynchronously
+    return true;
+  }
+});
+
+
+
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.action === 'analyzeImage') {
+    try {
+    
+       const { apiContents, apiKey, modelId } = request;
       // Call the Gemini API using the generateContent function
       const result = await generateContent(apiKey, modelId, apiContents);
       

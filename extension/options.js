@@ -15,10 +15,8 @@ const restoreOptions = async () => {
   document.getElementById("userModelId").value = options.userModelId;
   document.getElementById("theme").value = options.theme;
 
-  // Set the default language model if the language model is not set
-  if (!document.getElementById("languageModel").value) {
-    document.getElementById("languageModel").value = "2.0-flash";
-  }
+  // Dynamically compute modelId instead of storing it
+  document.getElementById("modelId").textContent = getModelId(options.languageModel);
 };
 
 const saveOptions = async () => {
@@ -33,16 +31,17 @@ const saveOptions = async () => {
 
   await chrome.storage.local.set(options);
   await chrome.storage.session.set({ responseCacheQueue: [] });
+
   const status = document.getElementById("save");
   status.textContent = chrome.i18n.getMessage("options_saved");
-  setTimeout(() => status.textContent = "Save Options", 2000);
+  setTimeout(() => (status.textContent = "Save Options"), 2000);
+  
   applyTheme((await chrome.storage.local.get({ theme: "system" })).theme);
 };
 
 const initialize = async () => {
   // Apply the theme
   applyTheme((await chrome.storage.local.get({ theme: "system" })).theme);
-
 
   // Load the language model template
   const languageModelTemplate = await loadTemplate("languageModelTemplate");
